@@ -1,38 +1,31 @@
 import os
 import telebot
-import openai
+from openai import OpenAI
 
-# جلب التوكن من المتغيرات البيئية
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# ضع التوكنات حقتك هنا
+TELEGRAM_TOKEN = "ضع_توكن_بوت_التلقرام"
+OPENAI_API_KEY = "ضع_مفتاح_OpenAI"
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-openai.api_key = OPENAI_API_KEY
-
-@bot.message_handler(commands=["start"])
-def start(message):
-    bot.reply_to(message, "مرحباً 👋 أنا بوت ECG مع أبو عيد. اسألني أي شيء يخص تخطيط القلب!")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 @bot.message_handler(func=lambda message: True)
-def chat_with_ai(message):
+def handle_message(message):
     try:
-        user_message = message.text
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+        # استدعاء موديل OpenAI الجديد
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # تقدر تبدلها بـ gpt-4o لو تبي أقوى
             messages=[
-                {"role": "system", "content": "انت مساعد مختص في ECG. اجعل إجاباتك دقيقة ومباشرة."},
-                {"role": "user", "content": user_message}
-            ],
-            max_tokens=300,
-            temperature=0.7
+                {"role": "system", "content": "انت بوت مختص بشرح تخطيط القلب (ECG). تجاوب بالعربية أو الإنجليزية باختصار ودقة."},
+                {"role": "user", "content": message.text}
+            ]
         )
 
-        reply = response["choices"][0]["message"]["content"]
+        reply = response.choices[0].message.content
         bot.reply_to(message, reply)
 
     except Exception as e:
-        bot.reply_to(message, f"حدث خطأ: {str(e)}")
+        bot.reply_to(message, f"صار خطأ: {str(e)}")
 
-# تشغيل البوت
+print("✅ البوت شغّال ...")
 bot.polling()
